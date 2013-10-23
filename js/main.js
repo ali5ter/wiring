@@ -95,6 +95,10 @@ function stopHandler(e, o) {
 }
 
 function dropHandler(e, o) {
+    o.draggable.draggable('disable');
+    $(this).droppable('disable');
+    current.x = parseInt($(this).css('left')) - 9;
+    current.y = parseInt($(this).css('top')) - 5;
     wireLayer.append('svg:line')
         .property('class','wire')
         .attr('x1', origin.x).attr('y1', origin.y)
