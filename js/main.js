@@ -19,7 +19,32 @@ function init() {
         .attr('width', width)
         .attr('height', height);
     layoutTerminals();
-    initDragDrop();
+    //initDragDrop();
+    createConnections();
+}
+
+function createConnections() {
+    var wires = jsPlumb.getInstance({
+        PaintStyle: {
+            lineWidth: 2,
+            strokeStyle: "#262626",
+            outlineColor: "#bfff00",
+            outlineWidth: 1
+        },
+        Connector : [ "Bezier", { curviness: 150 } ],
+        Endpoint:[ "Dot", { radius: 4 } ],
+        EndpointStyle : { fillStyle: "#bfff00"  },
+        Anchors : [ "Center", "Center" ]
+    });
+
+    var numTerminals = $('.terminal').length;
+    for (var i=0; i<(numTerminals/5); i++) {
+        wires.connect({
+            source: 't'+ Math.floor(Math.random()*numTerminals),
+            target: 't'+ Math.floor(Math.random()*numTerminals),
+            scope: 'group0'
+        });
+    }
 }
 
 function layoutTerminals() {
@@ -109,6 +134,8 @@ function dropHandler(e, o) {
 }
 
 $(function() {
-    init();
+    //jsPlumb.ready(function() { // TODO: Do we realy need this in jquery context?
+        init();
+    //});
 });
 
