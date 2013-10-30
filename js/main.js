@@ -37,11 +37,15 @@ function createConnections() {
         Anchors : [ "Center", "Center" ]
     });
 
-    var numTerminals = $('.terminal').length;
-    for (var i=0; i<(numTerminals/5); i++) {
+    var terminals = [];
+    $('.terminal.group0').each(function() {
+            terminals.push($(this).attr('id'));
+    });
+    var numTerminals = terminals.length;
+    for (var i=0; i<(numTerminals/1.5); i++) {
         wires.connect({
-            source: 't'+ Math.floor(Math.random()*numTerminals),
-            target: 't'+ Math.floor(Math.random()*numTerminals),
+            source: terminals[Math.floor(Math.random()*numTerminals)],
+            target: terminals[Math.floor(Math.random()*numTerminals)],
             scope: 'group0'
         });
     }
