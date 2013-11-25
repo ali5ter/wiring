@@ -1,5 +1,6 @@
 Messign around with a wiring metaphor
 
+<img src="https://github.com/ali5ter/wiring/blob/master/images/screenshots/wiring-04.png?raw=true" width="32%"/>&nbsp;
 <img src="https://github.com/ali5ter/wiring/blob/master/images/screenshots/wiring-00.png?raw=true" width="32%"/>&nbsp;
 <img src="https://github.com/ali5ter/wiring/blob/master/images/screenshots/wiring-01.png?raw=true" width="32%"/>&nbsp;
 <img src="https://github.com/ali5ter/wiring/blob/master/images/screenshots/wiring-02.png?raw=true" width="32%"/>&nbsp;
