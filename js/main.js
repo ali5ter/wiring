@@ -1,145 +1,92 @@
 /**
- * ★ Playing with drag n'drop
+ * ★ Playing with a wiring metaphor
  * @author Alister Lewis-Bowen <alister@different.com>
  */
 
-var width = 0,
-    height = 0,
-    terminalGroups = 4,
-    origin = { x: 0, y: 0 }
-    current = { x: 0, y: 0 }
-    wireLayer = null,
-    wire = null;
+var jp = [],            // jsPlumb instance
+    width = 0,          // width of baord
+    height = 0,         // height of board
+    terminalGroups = 4, // number of terminal groups
+    terminals = [];     // array of terminals
+
+var endpointOptions = {
+        endpoint: [ 'Dot', { radius: 4 } ],
+        paintStyle: {
+            strokeStyle: 'rgba(191, 255, 0, 0.8)',
+        },
+        isSource: true,
+        isTarget: true,
+        reattach : true,
+        connector: [ 'Flowchart', { midpoint: 0.38, cornerRadius: 16 } ],
+        connectorStlye: {
+            lineWidth: 3,
+            strokeStyle: 'rgba(191, 255, 0, 0.8)',
+            outlineColor: null,
+            outlineWidth: 0
+        },
+        beforeDrop: function(i) { console.log('Connecting'); },
+        dropOptions: dropOptions
+    };
+
+var dropOptions = {
+        tolerance: 'touch',         // ??
+        hoverClass: 'dropHover',    // jsPlumb_hover on connectors/endpoints on mouse hover
+        activeClass: 'dragActive'   // ??
+    };
 
 function init() {
     var padding = parseInt($('#board').css('padding'))*2;
     width = $('#board').innerWidth() - padding;
     height = $('#board').innerHeight() - padding;
-    wireLayer = d3.select('#board').append('svg:svg')
-        .attr('width', width)
-        .attr('height', height);
+
+    jp = jsPlumb.getInstance({
+        DragOptions: { cursor: 'pointer', zIndex: 2000 },
+        PaintStyle: { strokeStyle: '#ccc' },
+        EndpointStyle: { width: 16, height: 16, strokeStyle: '#bfff00' },
+        Anchors: [ 'Center', 'Center' ],
+        Container: 'board'
+    });
+
+    jp.doWhileSuspended(function() {
+        jp.bind('connection', function(i, e) { console.log('Connected'); });
+        jp.bind('connectionDetached', function(i, e) { console.log('Detached'); });
+    });
+
     layoutTerminals();
-    //initDragDrop();
-    createConnections();
 }
 
-function createConnections() {
-    var wires = jsPlumb.getInstance({
-        PaintStyle: {
-            lineWidth: 2,
-            strokeStyle: "#262626",
-            outlineColor: "#bfff00",
-            outlineWidth: 1
-        },
-        Connector : [ "Bezier", { curviness: 150 } ],
-        Endpoint:[ "Dot", { radius: 4 } ],
-        EndpointStyle : { fillStyle: "#bfff00"  },
-        Anchors : [ "Center", "Center" ]
-    });
-
-    var terminals = [];
-    $('.terminal.group0').each(function() {
-            terminals.push($(this).attr('id'));
-    });
-    var numTerminals = terminals.length;
-    for (var i=0; i<(numTerminals/1.5); i++) {
-        wires.connect({
-            source: terminals[Math.floor(Math.random()*numTerminals)],
-            target: terminals[Math.floor(Math.random()*numTerminals)],
-            scope: 'group0'
-        });
-    }
+function drawTerminal(x, y, id, scope) {
+    $('#board').append('<div id="t'+ id +'" class="terminal"></div>');
+    $('#t'+ id).css({ 'left': x, 'top': y }).addClass('scope'+ scope);
+    terminals.push(jp.addEndpoint('t'+ id, { scope: scope }, endpointOptions));
+    //$('#t'+ id).css({ 'left': x, 'top': y });
 }
 
 function layoutTerminals() {
-    var x = 0;
-    var y = 0;
-    var x1 = 16;
-    var y1 = 16;
-    var w = width-x1
-    var h = height-y1;
-    var xSteps = 20;
-    var ySteps = 8;
-    var xInc = Math.floor(w/xSteps);
-    var yInc = Math.floor(h/ySteps);
-    var id = 0;
+    var x1 = 16,
+        y1 = 16,
+        xSteps = 20,
+        ySteps = 8,
+        xInc = Math.floor((width-x1)/xSteps),
+        yInc = Math.floor((height-y1)/ySteps),
+        id = 0;
     for (var i=0; i<xSteps+1; i++) {
         for (var j=0; j<ySteps+1; j++) {
             if ((Math.floor(Math.random()*2)) == 1) {
-                x = x1 + (xInc*i);
-                y = y1 + (yInc*j);
-                id++
-                $('#board').append('<div id="t'+ id +'" class="terminal"><i class="icon-circle-blank"></i></div>');
-                $('#t'+ id).css({ 'left': x, 'top': y }).addClass('group'+ (Math.floor(Math.random()*terminalGroups)));
+                drawTerminal(
+                    x1 + (xInc*i),
+                    y1 + (yInc*j),
+                    id++,
+                    Math.floor(Math.random()*terminalGroups)
+                );
             }
         }
     }
 }
 
-function initDragDrop() {
-    $('.terminal').draggable({
-        containment: 'parent',  // keep terminal on the board
-        cursor: 'pointer',      // change cursor while dragging
-        helper: terminalHelper, // function to create draggable helper
-        start: startHandler,    // fired when draggable element first dragged
-        drag: dragHandler,      // fired when draggable element dragged
-        stop: stopHandler       // fired when draggable element dropped
-    });
-    $('.terminal').droppable({
-        activeClass: 'active',  // class of droppable while an acceptable draggable is being dragged
-        hoverClass: 'dropit',   // class of droppable while an acceptable draggable is being hovered over the droppable
-        tolerance: 'intersect', // draggable overlaps the droppable at least 50% in both directions
-        drop: dropHandler       // fired when an accepted draggable is dropped on the droppable
-    });
-    for (var group=0; group<terminalGroups; group++) {
-        var selector = '.terminal.group'+ group;
-        $(selector).droppable({ accept: selector }); // tie together draggable and droppable
-    }
-}
-
-function terminalHelper(e) {
-    return '<div id="terminal-helper" class="terminal"><i class="icon-circle-blank"></i></div>';
-}
-
-function startHandler(e, o) {
-    origin.x = o.originalPosition.left - 9;
-    origin.y = o.originalPosition.top - 5;
-    wire = wireLayer.append('svg:line')
-        .property('id','connection')
-        .attr('x1', origin.x).attr('y1', origin.y)
-        .attr('x2', origin.x).attr('y2', origin.y)
-        .style('stroke', '#bfff00')
-        .style('stroke-width', '4px')
-        .style('stroke-opacity', 0.3);
-}
-
-function dragHandler(e, o) {
-    current.x = o.position.left - 9;
-    current.y = o.position.top - 5;
-    wire.attr('x2', current.x).attr('y2', current.y);
-}
-
-function stopHandler(e, o) {
-    wire.remove();
-}
-
-function dropHandler(e, o) {
-    o.draggable.draggable('disable');
-    $(this).droppable('disable');
-    current.x = parseInt($(this).css('left')) - 9;
-    current.y = parseInt($(this).css('top')) - 5;
-    wireLayer.append('svg:line')
-        .property('class','wire')
-        .attr('x1', origin.x).attr('y1', origin.y)
-        .attr('x2', current.x).attr('y2', current.y)
-        .style('stroke', '#bfff00')
-        .style('stroke-width', '4px')
-        .style('stroke-opacity', 0.8);
-}
-
 $(function() {
-    //jsPlumb.ready(function() { // TODO: Do we realy need this in jquery context?
+    jsPlumb.ready(function() {
         init();
-    //});
+    });
 });
 
